@@ -9,15 +9,19 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { ArrowLeft } from "lucide-react";
-import { toast } from "@/hooks/use-toast";
+import { useCreateHabit } from "@/hooks/useHabits";
 
 const AddHabit = () => {
   const navigate = useNavigate();
+  const createHabitMutation = useCreateHabit();
+  
   const [habitData, setHabitData] = useState({
     name: "",
     description: "",
     category: "",
-    frequency: "daily",
+    frequency: "daily" as "daily" | "weekly" | "monthly",
+    targetCount: 1,
+    color: "#3B82F6",
     selectedDays: [] as string[],
     specificDate: "",
   });
@@ -41,23 +45,28 @@ const AddHabit = () => {
     }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
     if (!habitData.name.trim()) {
-      toast({
-        title: "Error",
-        description: "Please enter a habit name",
-        variant: "destructive",
-      });
       return;
     }
 
-    toast({
-      title: "Success!",
-      description: "Your habit has been added successfully",
-    });
-    
-    navigate('/today');
+    try {
+      await createHabitMutation.mutateAsync({
+        name: habitData.name,
+        description: habitData.description,
+        category: habitData.category,
+        frequency: habitData.frequency,
+        targetCount: habitData.targetCount,
+        color: habitData.color,
+        isActive: true,
+      });
+      
+      navigate('/today');
+    } catch (error) {
+      console.error('Error creating habit:', error);
+    }
   };
 
   return (
@@ -122,61 +131,40 @@ const AddHabit = () => {
               </Select>
             </div>
 
+            <div className="space-y-2">
+              <Label htmlFor="targetCount">Daily Target</Label>
+              <Input
+                id="targetCount"
+                type="number"
+                min="1"
+                value={habitData.targetCount}
+                onChange={(e) => setHabitData(prev => ({ ...prev, targetCount: parseInt(e.target.value) || 1 }))}
+              />
+            </div>
+
             <div className="space-y-3">
               <Label>Frequency</Label>
               <Select 
                 value={habitData.frequency} 
-                onValueChange={(value) => setHabitData(prev => ({ ...prev, frequency: value }))}
+                onValueChange={(value: "daily" | "weekly" | "monthly") => setHabitData(prev => ({ ...prev, frequency: value }))}
               >
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="daily">Every Day</SelectItem>
-                  <SelectItem value="weekdays">Specific Weekdays</SelectItem>
-                  <SelectItem value="specific">Specific Date</SelectItem>
-                  <SelectItem value="once">Just For Now</SelectItem>
+                  <SelectItem value="daily">Daily</SelectItem>
+                  <SelectItem value="weekly">Weekly</SelectItem>
+                  <SelectItem value="monthly">Monthly</SelectItem>
                 </SelectContent>
               </Select>
-
-              {habitData.frequency === "weekdays" && (
-                <div className="space-y-2">
-                  <Label>Select Days</Label>
-                  <div className="flex flex-wrap gap-2">
-                    {weekdays.map((day) => (
-                      <div key={day.id} className="flex items-center space-x-2">
-                        <Checkbox
-                          id={day.id}
-                          checked={habitData.selectedDays.includes(day.id)}
-                          onCheckedChange={() => handleDayToggle(day.id)}
-                        />
-                        <Label htmlFor={day.id} className="text-sm font-normal">
-                          {day.label}
-                        </Label>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {habitData.frequency === "specific" && (
-                <div className="space-y-2">
-                  <Label htmlFor="specificDate">Select Date</Label>
-                  <Input
-                    id="specificDate"
-                    type="date"
-                    value={habitData.specificDate}
-                    onChange={(e) => setHabitData(prev => ({ ...prev, specificDate: e.target.value }))}
-                  />
-                </div>
-              )}
             </div>
 
             <Button 
               type="submit" 
               className="w-full bg-gradient-to-r from-blue-500 to-green-500 hover:from-blue-600 hover:to-green-600"
+              disabled={createHabitMutation.isPending}
             >
-              Create Habit
+              {createHabitMutation.isPending ? 'Creating...' : 'Create Habit'}
             </Button>
           </form>
         </CardContent>
