@@ -16,7 +16,7 @@ interface JournalEntry {
 const Journals = () => {
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
   const [isWriting, setIsWriting] = useState(false);
-  const [currentEntry, setCurrentEntry] = useState("");
+  const [entryText, setEntryText] = useState("");
   
   const [journalEntries, setJournalEntries] = useState<JournalEntry[]>([
     {
@@ -39,7 +39,7 @@ const Journals = () => {
     const existingEntry = getCurrentEntry();
     const newEntry: JournalEntry = {
       date: selectedDate,
-      content: currentEntry,
+      content: entryText,
       mood: "happy" // Default mood, could be made selectable
     };
 
@@ -54,12 +54,12 @@ const Journals = () => {
     }
 
     setIsWriting(false);
-    setCurrentEntry("");
+    setEntryText("");
   };
 
   const handleStartWriting = () => {
     const existingEntry = getCurrentEntry();
-    setCurrentEntry(existingEntry?.content || "");
+    setEntryText(existingEntry?.content || "");
     setIsWriting(true);
   };
 
@@ -107,7 +107,7 @@ const Journals = () => {
     return days;
   };
 
-  const currentEntry = getCurrentEntry();
+  const selectedEntry = getCurrentEntry();
 
   return (
     <div className="p-4 pb-20 max-w-md mx-auto">
@@ -149,7 +149,7 @@ const Journals = () => {
                 day: 'numeric' 
               })}
             </CardTitle>
-            {currentEntry && (
+            {selectedEntry && (
               <Badge variant="outline" className="text-green-600">
                 Entry exists
               </Badge>
@@ -159,14 +159,14 @@ const Journals = () => {
         <CardContent>
           {!isWriting ? (
             <div className="space-y-4">
-              {currentEntry ? (
+              {selectedEntry ? (
                 <div className="space-y-3">
                   <p className="text-gray-700 leading-relaxed">
-                    {currentEntry.content}
+                    {selectedEntry.content}
                   </p>
                   <div className="flex justify-between items-center pt-3 border-t">
                     <Badge variant="secondary">
-                      {currentEntry.mood}
+                      {selectedEntry.mood}
                     </Badge>
                     <Button
                       onClick={handleStartWriting}
@@ -195,8 +195,8 @@ const Journals = () => {
           ) : (
             <div className="space-y-4">
               <Textarea
-                value={currentEntry}
-                onChange={(e) => setCurrentEntry(e.target.value)}
+                value={entryText}
+                onChange={(e) => setEntryText(e.target.value)}
                 placeholder="What's on your mind today? How did your habits go? What are you grateful for?"
                 rows={6}
                 className="resize-none"
@@ -212,7 +212,7 @@ const Journals = () => {
                 <Button
                   onClick={() => {
                     setIsWriting(false);
-                    setCurrentEntry("");
+                    setEntryText("");
                   }}
                   variant="outline"
                 >
