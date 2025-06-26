@@ -4,6 +4,8 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { AuthProvider } from "@/contexts/AuthContext";
+import ProtectedRoute from "@/components/ProtectedRoute";
 import Index from "./pages/Index";
 import Login from "./pages/Login";
 import AddHabit from "./pages/AddHabit";
@@ -22,19 +24,41 @@ const App = () => (
       <Toaster />
       <Sonner />
       <BrowserRouter>
-        <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-green-50">
-          <Routes>
-            <Route path="/login" element={<Login />} />
-            <Route path="/" element={<Index />} />
-            <Route path="/add-habit" element={<AddHabit />} />
-            <Route path="/today" element={<TodayHabits />} />
-            <Route path="/stats" element={<ViewStats />} />
-            <Route path="/journals" element={<Journals />} />
-            <Route path="/profile" element={<UserProfile />} />
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-          <Navigation />
-        </div>
+        <AuthProvider>
+          <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-green-50">
+            <Routes>
+              <Route path="/login" element={<Login />} />
+              <Route path="/" element={<Index />} />
+              <Route path="/add-habit" element={
+                <ProtectedRoute>
+                  <AddHabit />
+                </ProtectedRoute>
+              } />
+              <Route path="/today" element={
+                <ProtectedRoute>
+                  <TodayHabits />
+                </ProtectedRoute>
+              } />
+              <Route path="/stats" element={
+                <ProtectedRoute>
+                  <ViewStats />
+                </ProtectedRoute>
+              } />
+              <Route path="/journals" element={
+                <ProtectedRoute>
+                  <Journals />
+                </ProtectedRoute>
+              } />
+              <Route path="/profile" element={
+                <ProtectedRoute>
+                  <UserProfile />
+                </ProtectedRoute>
+              } />
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+            <Navigation />
+          </div>
+        </AuthProvider>
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>

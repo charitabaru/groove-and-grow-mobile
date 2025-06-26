@@ -6,22 +6,67 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
+import { useToast } from "@/hooks/use-toast";
+import { registerWithEmailAndPassword, loginWithEmailAndPassword, loginWithGoogle } from "@/services/authService";
+import { LogIn, User, Mail } from "lucide-react";
 
 const Login = () => {
   const [isLogin, setIsLogin] = useState(true);
-  const [username, setUsername] = useState("");
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [username, setUsername] = useState("");
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  const { toast } = useToast();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // For demo purposes, just navigate to today's habits
-    navigate('/today');
+    setLoading(true);
+
+    try {
+      if (isLogin) {
+        await loginWithEmailAndPassword(email, password);
+        toast({
+          title: "Welcome back!",
+          description: "You have been logged in successfully.",
+        });
+      } else {
+        await registerWithEmailAndPassword(email, password, username);
+        toast({
+          title: "Account created!",
+          description: "Your account has been created successfully.",
+        });
+      }
+      navigate('/today');
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "An error occurred. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleGoogleLogin = () => {
-    // Demo Google login
-    navigate('/today');
+  const handleGoogleLogin = async () => {
+    setLoading(true);
+    try {
+      await loginWithGoogle();
+      toast({
+        title: "Welcome!",
+        description: "You have been logged in with Google successfully.",
+      });
+      navigate('/today');
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "An error occurred. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -38,14 +83,27 @@ const Login = () => {
         </CardHeader>
         <CardContent className="space-y-4">
           <form onSubmit={handleSubmit} className="space-y-4">
+            {!isLogin && (
+              <div className="space-y-2">
+                <Label htmlFor="username">Username</Label>
+                <Input
+                  id="username"
+                  type="text"
+                  placeholder="Enter your username"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  required
+                />
+              </div>
+            )}
             <div className="space-y-2">
-              <Label htmlFor="username">Username</Label>
+              <Label htmlFor="email">Email</Label>
               <Input
-                id="username"
-                type="text"
-                placeholder="Enter your username"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
+                id="email"
+                type="email"
+                placeholder="Enter your email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
                 required
               />
             </div>
@@ -58,10 +116,16 @@ const Login = () => {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
+                minLength={6}
               />
             </div>
-            <Button type="submit" className="w-full bg-gradient-to-r from-blue-500 to-green-500 hover:from-blue-600 hover:to-green-600">
-              {isLogin ? "Sign In" : "Sign Up"}
+            <Button 
+              type="submit" 
+              className="w-full bg-gradient-to-r from-blue-500 to-green-500 hover:from-blue-600 hover:to-green-600"
+              disabled={loading}
+            >
+              <LogIn className="w-4 h-4 mr-2" />
+              {loading ? "Please wait..." : (isLogin ? "Sign In" : "Sign Up")}
             </Button>
           </form>
           
@@ -79,6 +143,7 @@ const Login = () => {
             variant="outline" 
             className="w-full"
             onClick={handleGoogleLogin}
+            disabled={loading}
           >
             <svg className="w-4 h-4 mr-2" viewBox="0 0 24 24">
               <path fill="currentColor" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
@@ -94,6 +159,7 @@ const Login = () => {
               variant="link" 
               onClick={() => setIsLogin(!isLogin)}
               className="text-sm"
+              disabled={loading}
             >
               {isLogin ? "Don't have an account? Sign up" : "Already have an account? Sign in"}
             </Button>
